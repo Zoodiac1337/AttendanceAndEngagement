@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "355622817597",
+    "project_id": "finalyearproject-cfccf",
+    "storage_bucket": "finalyearproject-cfccf.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:355622817597:android:cedd4ce9f5ff07de563f54",
+        "android_client_info": {
+          "package_name": "com.example.attendanceandengagement"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "355622817597-nvlvjqor8grve20sk0r5q537d8ac0iad.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBos5bsSNWVKsBBQNKK3iiHicEttDAtajQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "355622817597-nvlvjqor8grve20sk0r5q537d8ac0iad.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

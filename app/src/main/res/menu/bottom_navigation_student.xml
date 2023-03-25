@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/timetable"
+        android:enabled="true"
+        android:icon="@drawable/round_calendar_today_24"
+        android:title="Timetable"/>
+    <item
+        android:id="@+id/study"
+        android:enabled="true"
+        android:icon="@drawable/round_school_24"
+        android:title="Study"/>
+    <item
+        android:id="@+id/deadlines"
+        android:enabled="true"
+        android:icon="@drawable/round_warning_24"
+        android:title="Deadlines"/>
+    <item
+        android:id="@+id/resources"
+        android:enabled="true"
+        android:icon="@drawable/round_library_books_24"
+        android:title="Resources"/>
+    <item
+        android:id="@+id/dashboard"
+        android:enabled="true"
+        android:icon="@drawable/round_space_dashboard_24"
+        android:title="Dashboard"/>
+</menu>
