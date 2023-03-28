@@ -2,6 +2,9 @@ package com.example.attendanceandengagement;
 
 import static java.lang.Long.parseLong;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -17,6 +20,13 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import com.github.mikephil.charting.charts.BarChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.utils.PercentFormatter;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.firestore.DocumentReference;
@@ -24,8 +34,14 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.Period;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -78,48 +94,57 @@ public class Study extends Fragment {
     final CountDownTimer[] timer = {null};
     Button startButton;
     Button stopButton;
+    Button studyGoalButton;
     TextView timerText;
     TableRow timerRow1;
     TableRow timerRow2;
     TextView timerSeconds;
     TextView timerMinutes;
+    TextView goalReached;
     EditText pomodoroWork;
     EditText pomodoroBreak;
+    EditText studyGoal;
     MediaPlayer notification;
-    TextView day0;
-    TextView day1;
-    TextView day2;
-    TextView day3;
-    TextView day4;
-    TextView day5;
-    TextView day6;
+    BarChart barChart;
+    Bundle bundle;
+    SharedPreferences preferences;
+    SharedPreferences.Editor editor;
+    DocumentReference docRef;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+                             Bundle savedInstanceState)
+    {
 
         View view = inflater.inflate(R.layout.fragment_study, container, false);
+        bundle = getArguments();
+        preferences = this.getActivity().getSharedPreferences(bundle.getString("email"), Context.MODE_PRIVATE);
+        editor=preferences.edit();
+
+        docRef = db.collection("Users").document(bundle.getString("email"));
+
+        barChart = (BarChart) view.findViewById(R.id.barChart);
         updatePastDays();
-        // Inflate the layout for this fragment
         notification = MediaPlayer.create(getContext(), R.raw.notification);
         pomodoroBreak = (EditText) view.findViewById(R.id.pomodoroBreak);
         timerSeconds = (TextView) view.findViewById(R.id.timerSeconds);
         timerMinutes = (TextView) view.findViewById(R.id.timerMinutes);
+        goalReached = (TextView) view.findViewById(R.id.goalReached);
         pomodoroWork = (EditText) view.findViewById(R.id.pomodoroWork);
+        studyGoal = (EditText) view.findViewById(R.id.studyGoal);
         startButton = (Button) view.findViewById(R.id.timerStartButton);
         stopButton = (Button) view.findViewById(R.id.timerStopButton);
+        studyGoalButton = (Button) view.findViewById(R.id.studyGoalButton);
         timerText = (TextView) view.findViewById(R.id.timerText);
         timerRow1 = (TableRow) view.findViewById(R.id.timerRow1);
         timerRow2 = (TableRow) view.findViewById(R.id.timerRow2);
-        day0 = (TextView) view.findViewById(R.id.day0);
-        day1 = (TextView) view.findViewById(R.id.day1);
-        day2 = (TextView) view.findViewById(R.id.day2);
-        day3 = (TextView) view.findViewById(R.id.day3);
-        day4 = (TextView) view.findViewById(R.id.day4);
-        day5 = (TextView) view.findViewById(R.id.day5);
-        day6 = (TextView) view.findViewById(R.id.day6);
 
         timerRow1.setVisibility(View.GONE);
         timerRow2.setVisibility(View.VISIBLE);
+
+        pomodoroWork.setText(preferences.getString("pomodoroWork", "25"));
+        pomodoroBreak.setText(preferences.getString("pomodoroBreak", "5"));
+        studyGoal.setText(preferences.getString("studyGoal", "2"));
 
         startButton.setOnClickListener(new View.OnClickListener()
         {
@@ -128,6 +153,9 @@ public class Study extends Fragment {
             {
                 try
                 {
+                    editor.putString("pomodoroWork", pomodoroWork.getText().toString());
+                    editor.putString("pomodoroBreak", pomodoroBreak.getText().toString());
+                    editor.apply();
                     studyTimer();
                 }
                 catch (NumberFormatException e)
@@ -146,8 +174,19 @@ public class Study extends Fragment {
                 stopTimer();
             }
         });
+
+        studyGoalButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                setStudyGoal();
+            }
+        });
+
         return view;
     }
+
 
     public void studyTimer()
     {
@@ -247,46 +286,76 @@ public class Study extends Fragment {
                 timer[0].cancel();
         }
     }
+
     public void updateMinutes(int minutesStudied)
     {
-        String todayString = LocalDate.now().toString();
-        Bundle bundle = getArguments();
-        DocumentReference docRef = db.collection("Users").document(bundle.getString("email"));
-        docRef.update("minutesStudied."+todayString, FieldValue.increment(minutesStudied));
+        docRef.update("minutesStudied."+LocalDate.now().toString(), FieldValue.increment(minutesStudied));
     }
 
     public void updatePastDays()
     {
-        Bundle bundle = getArguments();
-        DocumentReference docRef = db.collection("Users").document(bundle.getString("email"));
         docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                Long[] studiedTime = new Long[7];
+                Map<String, Float> barChartEntries = new TreeMap<String, Float>();
                 if (task.isSuccessful()) {
                     DocumentSnapshot document = task.getResult();
+                    float StudyGoal = Integer.parseInt(preferences.getString("studyGoal", "2"))*60;
                     for (int i = 0; i <= 6; i++) {
                         LocalDate date = LocalDate.now().minus(Period.ofDays(i));
-                        studiedTime[i] = document.getLong("minutesStudied."+date);
-                        if (studiedTime[i]==null)
-                            studiedTime[i] = 0L;
+                        if (document.getLong("minutesStudied."+date)!=null)
+                            barChartEntries.put(date.getDayOfMonth()+"th", document.getLong("minutesStudied."+date)*100f/StudyGoal);
+                        else barChartEntries.put(date.getDayOfMonth()+"th", 0f);
                     }
-                    setPastDays(studiedTime);
+                    goalReached.setText("Today reached: "+Math.round(document.getLong("minutesStudied."+LocalDate.now())*100/StudyGoal)+"%");
+                    setBarData(barChartEntries);
                 }
             }
-
         });
-
     }
 
-    public void setPastDays(Long[] studiedTime)
+    private void setBarData(Map<String, Float> entries)
     {
-        day0.setText(studiedTime[0].toString());
-        day1.setText(studiedTime[1].toString());
-        day2.setText(studiedTime[2].toString());
-        day3.setText(studiedTime[3].toString());
-        day4.setText(studiedTime[4].toString());
-        day5.setText(studiedTime[5].toString());
-        day6.setText(studiedTime[6].toString());
+        ArrayList barEntriesArrayList = new ArrayList<>();
+        ArrayList Labels = new ArrayList();
+
+        int number = 0;
+        for (String i : entries.keySet()) {
+            Labels.add(i);
+            barEntriesArrayList.add(new BarEntry(entries.get(i), number));
+            number++;
+        }
+        BarDataSet barDataSet = new BarDataSet(barEntriesArrayList, "Percentage of daily goal achieved");
+
+        BarData barData = new BarData(Labels, barDataSet);
+
+
+
+        barDataSet.setColor(Color.parseColor("#E4045B"));
+        barDataSet.setValueTextColor(Color.BLACK);
+        barDataSet.setValueTextSize(0f);
+        XAxis xAxis = barChart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setDrawGridLines(false);
+        YAxis leftAxis = barChart.getAxisLeft();
+        leftAxis.setDrawAxisLine(false);
+        leftAxis.setEnabled(false);
+        YAxis rightAxis = barChart.getAxisRight();
+        rightAxis.setValueFormatter(new PercentFormatter());
+        rightAxis.setDrawAxisLine(false);
+        barChart.setData(barData);
+        barChart.setDescription("");
+        barChart.animateY(750);
+        barChart.setDrawBarShadow(false);
+        barChart.setDrawGridBackground(false);
+        barChart.notifyDataSetChanged();
+        barChart.invalidate();
+    }
+
+    public void setStudyGoal()
+    {
+        editor.putString("studyGoal", studyGoal.getText().toString());
+        editor.apply();
+        updatePastDays();
     }
 }

@@ -47,9 +47,9 @@ public class MainActivity extends AppCompatActivity {
                 if (task.isSuccessful()) {
                     // Sign in success, update UI with the signed-in user's information
                     if (email.endsWith("@my.ntu.ac.uk"))
-                        startActivity(new Intent(MainActivity.this, StudentActivity.class));
+                        startActivity(new Intent(MainActivity.this, StudentActivity.class).putExtra("email", email));
                     else if (email.endsWith("ntu.ac.uk"))
-                        startActivity(new Intent(MainActivity.this, StudentActivity.class));
+                        startActivity(new Intent(MainActivity.this, StudentActivity.class).putExtra("email", email));
                     finish();
                     Toast.makeText(MainActivity.this, email+" logged in", Toast.LENGTH_SHORT).show();
                 } else {

@@ -1,11 +1,27 @@
 package com.example.attendanceandengagement;
 
+import static android.content.ContentValues.TAG;
+
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListView;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+
+import com.example.attendanceandengagement.ListAdapters.ListAdapterDeadlines;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
+
+import java.util.Date;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -53,11 +69,54 @@ public class Deadlines extends Fragment {
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
     }
+    Bundle bundle;
+    String currentUser;
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
+    ListView deadlinesListView;
+    ListAdapterDeadlines lAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_deadlines, container, false);
+
+        View view = inflater.inflate(R.layout.fragment_deadlines, container, false);
+        bundle = getArguments();
+        deadlinesListView = (ListView) view.findViewById(R.id.deadlinesList);
+        currentUser = bundle.getString("email");
+        getListItems();
+
+
+        return view;
+    }
+
+    public void getListItems() {
+        db.collection("Users/"+currentUser+"/Deadlines").orderBy("Date", Query.Direction.ASCENDING).get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                String[] name = new String[task.getResult().size()];
+                Date[] date = new Date[task.getResult().size()];
+                String[] description = new String[task.getResult().size()];
+                if (task.isSuccessful()) {
+                    int i = 0;
+                    for (QueryDocumentSnapshot document : task.getResult()) {
+                        name[i] = document.getString("Name");
+                        date[i] = document.getDate("Date");
+                        description[i] = document.getString("Description");
+                        i++;
+                    }
+                    populateListWithItems(name, date, description);
+                } else {
+                    Log.d(TAG, "Error getting documents: ", task.getException());
+                }
+
+            }
+        });
+
+    }
+
+    public void populateListWithItems(String[] name, Date[] date, String[] description) {
+
+        lAdapter = new ListAdapterDeadlines(getActivity(), name, date, description);
+        deadlinesListView.setAdapter(lAdapter);
     }
 }
