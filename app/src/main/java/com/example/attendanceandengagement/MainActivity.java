@@ -29,7 +29,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onStart() {
         super.onStart();
-        // Check if user is signed in (non-null) and update UI accordingly.
         if(mAuth.getCurrentUser() != null){
             String email = mAuth.getCurrentUser().getEmail();
             if (email.endsWith("@my.ntu.ac.uk"))
@@ -45,7 +44,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful()) {
-                    // Sign in success, update UI with the signed-in user's information
                     if (email.endsWith("@my.ntu.ac.uk"))
                         startActivity(new Intent(MainActivity.this, StudentActivity.class).putExtra("email", email));
                     else if (email.endsWith("ntu.ac.uk"))
@@ -53,7 +51,6 @@ public class MainActivity extends AppCompatActivity {
                     finish();
                     Toast.makeText(MainActivity.this, email+" logged in", Toast.LENGTH_SHORT).show();
                 } else {
-                    // If sign in fails, display a message to the user.
                     Log.e("SignInActivity", "signInWithEmail:failure", task.getException());
                     Toast.makeText(MainActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
                 }

@@ -1,11 +1,13 @@
 package com.example.attendanceandengagement;
 
-import static java.lang.Long.parseLong;
-
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.view.LayoutInflater;
@@ -18,6 +20,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.fragment.app.Fragment;
 
 import com.github.mikephil.charting.charts.BarChart;
@@ -34,12 +39,9 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -110,21 +112,22 @@ public class Study extends Fragment {
     SharedPreferences preferences;
     SharedPreferences.Editor editor;
     DocumentReference docRef;
+    NotificationManagerCompat notificationManager;
+    private static final String CHANNEL_ID = "notificationChannel";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState)
-    {
+                             Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_study, container, false);
         bundle = getArguments();
         preferences = this.getActivity().getSharedPreferences(bundle.getString("email"), Context.MODE_PRIVATE);
-        editor=preferences.edit();
-
+        editor = preferences.edit();
+        notificationManager = NotificationManagerCompat.from(getContext());
         docRef = db.collection("Users").document(bundle.getString("email"));
 
         barChart = (BarChart) view.findViewById(R.id.barChart);
-        updatePastDays();
+
         notification = MediaPlayer.create(getContext(), R.raw.notification);
         pomodoroBreak = (EditText) view.findViewById(R.id.pomodoroBreak);
         timerSeconds = (TextView) view.findViewById(R.id.timerSeconds);
@@ -142,44 +145,40 @@ public class Study extends Fragment {
         timerRow1.setVisibility(View.GONE);
         timerRow2.setVisibility(View.VISIBLE);
 
+        createNotificationChannel();
+        updatePastDays();
+
+
         pomodoroWork.setText(preferences.getString("pomodoroWork", "25"));
         pomodoroBreak.setText(preferences.getString("pomodoroBreak", "5"));
         studyGoal.setText(preferences.getString("studyGoal", "2"));
 
-        startButton.setOnClickListener(new View.OnClickListener()
-        {
+        startButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v)
-            {
-                try
-                {
+            public void onClick(View v) {
+                try {
                     editor.putString("pomodoroWork", pomodoroWork.getText().toString());
                     editor.putString("pomodoroBreak", pomodoroBreak.getText().toString());
                     editor.apply();
                     studyTimer();
-                }
-                catch (NumberFormatException e)
-                {
+                } catch (NumberFormatException e) {
                     Toast.makeText(getContext(), "Missing fields.", Toast.LENGTH_SHORT).show();
                 }
             }
 
         });
 
-        stopButton.setOnClickListener(new View.OnClickListener()
-        {
+        stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v)
-            {
+            public void onClick(View v) {
                 stopTimer();
+                stopNotification(1);
             }
         });
 
-        studyGoalButton.setOnClickListener(new View.OnClickListener()
-        {
+        studyGoalButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v)
-            {
+            public void onClick(View v) {
                 setStudyGoal();
             }
         });
@@ -188,8 +187,7 @@ public class Study extends Fragment {
     }
 
 
-    public void studyTimer()
-    {
+    public void studyTimer() {
         if (timer[0] != null)
             timer[0].cancel();
         int workMinutes = Integer.parseInt(pomodoroWork.getText().toString());
@@ -199,27 +197,26 @@ public class Study extends Fragment {
         timerRow1.setVisibility(View.VISIBLE);
         timerRow2.setVisibility(View.GONE);
 
-        timer[0] = new CountDownTimer(workSeconds * 1000, 1000)
-        {
+        timer[0] = new CountDownTimer(workSeconds * 1000, 1000) {
             int seconds = 0;
             int minutes = workMinutes;
 
             @Override
-            public void onTick(long millisUntilFinished)
-            {
-                timerSeconds.setText(String.valueOf(seconds));
-                timerMinutes.setText(String.valueOf(minutes));
+            public void onTick(long millisUntilFinished) {
+                timerSeconds.setText(String.format("%02d", seconds));
+                timerMinutes.setText(String.format("%02d", minutes));
                 if (seconds == 0) {
                     seconds = 60;
                     timerMinutes.setText(String.valueOf(minutes));
+                    createNotification(1, "Study timer", String.format("%02d", minutes)+":"+String.format("%02d", seconds));
                     minutes--;
                 }
+                createNotification(1, "Study timer", String.format("%02d", minutes)+":"+String.format("%02d", seconds));
                 seconds--;
             }
 
             @Override
-            public void onFinish()
-            {
+            public void onFinish() {
                 breakTimer();
                 updateMinutes(workMinutes);
                 updatePastDays();
@@ -229,8 +226,7 @@ public class Study extends Fragment {
         timer[0].start();
     }
 
-    public void breakTimer()
-    {
+    public void breakTimer() {
         final MediaPlayer notification = MediaPlayer.create(getContext(), R.raw.notification);
 
         if (timer[0] != null)
@@ -241,27 +237,26 @@ public class Study extends Fragment {
 
         timerText.setText("Break time: ");
 
-        timer[0] = new CountDownTimer(breakSeconds * 1000, 1000)
-        {
+        timer[0] = new CountDownTimer(breakSeconds * 1000, 1000) {
             int seconds = 0;
             int minutes = breakMinutes;
 
             @Override
-            public void onTick(long millisUntilFinished)
-            {
-                timerSeconds.setText( String.valueOf(seconds));
-                timerMinutes.setText(String.valueOf(minutes));
+            public void onTick(long millisUntilFinished) {
+                timerSeconds.setText(String.format("%02d", seconds));
+                timerMinutes.setText(String.format("%02d", minutes));
                 if (seconds == 0) {
                     seconds = 60;
                     timerMinutes.setText(String.valueOf(minutes));
+                    createNotification(1, "Study timer", String.format("%02d", minutes)+":"+String.format("%02d", seconds));
                     minutes--;
                 }
+                createNotification(1, "Break timer", String.format("%02d", minutes)+":"+String.format("%02d", seconds));
                 seconds--;
             }
 
             @Override
-            public void onFinish()
-            {
+            public void onFinish() {
                 notification.start();
                 studyTimer();
             }
@@ -269,53 +264,50 @@ public class Study extends Fragment {
         timer[0].start();
     }
 
-    public void stopTimer()
-    {
-
-
-        if (timer[0]!=null) {
+    public void stopTimer() {
+        if (timer[0] != null) {
             timerRow1.setVisibility(View.GONE);
             timerRow2.setVisibility(View.VISIBLE);
+
             if (timerText.getText().toString().equals("Study time: ")) {
                 if (Integer.parseInt(timerSeconds.getText().toString()) < 10)
                     updateMinutes(Integer.parseInt(pomodoroWork.getText().toString()) - (Integer.parseInt(timerMinutes.getText().toString())));
                 else
-                    updateMinutes(Integer.parseInt(pomodoroWork.getText().toString()) - (Integer.parseInt(timerMinutes.getText().toString()))-1);
+                    updateMinutes(Integer.parseInt(pomodoroWork.getText().toString()) - (Integer.parseInt(timerMinutes.getText().toString())) - 1);
                 updatePastDays();
             }
-                timer[0].cancel();
+            timer[0].cancel();
         }
     }
 
-    public void updateMinutes(int minutesStudied)
-    {
-        docRef.update("minutesStudied."+LocalDate.now().toString(), FieldValue.increment(minutesStudied));
+    public void updateMinutes(int minutesStudied) {
+        docRef.update("minutesStudied." + LocalDate.now().toString(), FieldValue.increment(minutesStudied));
     }
 
-    public void updatePastDays()
-    {
+    public void updatePastDays() {
         docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
                 Map<String, Float> barChartEntries = new TreeMap<String, Float>();
                 if (task.isSuccessful()) {
                     DocumentSnapshot document = task.getResult();
-                    float StudyGoal = Integer.parseInt(preferences.getString("studyGoal", "2"))*60;
+                    float StudyGoal = Integer.parseInt(preferences.getString("studyGoal", "2")) * 60;
                     for (int i = 0; i <= 6; i++) {
                         LocalDate date = LocalDate.now().minus(Period.ofDays(i));
-                        if (document.getLong("minutesStudied."+date)!=null)
-                            barChartEntries.put(date.getDayOfMonth()+"th", document.getLong("minutesStudied."+date)*100f/StudyGoal);
-                        else barChartEntries.put(date.getDayOfMonth()+"th", 0f);
+                        if (document.getLong("minutesStudied." + date) != null)
+                            barChartEntries.put(date.getDayOfMonth() + "th", document.getLong("minutesStudied." + date) * 100f / StudyGoal);
+                        else barChartEntries.put(date.getDayOfMonth() + "th", 0f);
                     }
-                    goalReached.setText("Today reached: "+Math.round(document.getLong("minutesStudied."+LocalDate.now())*100/StudyGoal)+"%");
+                    if (document.getLong("minutesStudied." + LocalDate.now()) != null)
+                        goalReached.setText("Today reached: " + Math.round(document.getLong("minutesStudied." + LocalDate.now()) * 100 / StudyGoal) + "%");
+                    else goalReached.setText("Today reached: 0%");
                     setBarData(barChartEntries);
                 }
             }
         });
     }
 
-    private void setBarData(Map<String, Float> entries)
-    {
+    private void setBarData(Map<String, Float> entries) {
         ArrayList barEntriesArrayList = new ArrayList<>();
         ArrayList Labels = new ArrayList();
 
@@ -328,7 +320,6 @@ public class Study extends Fragment {
         BarDataSet barDataSet = new BarDataSet(barEntriesArrayList, "Percentage of daily goal achieved");
 
         BarData barData = new BarData(Labels, barDataSet);
-
 
 
         barDataSet.setColor(Color.parseColor("#E4045B"));
@@ -352,10 +343,45 @@ public class Study extends Fragment {
         barChart.invalidate();
     }
 
-    public void setStudyGoal()
-    {
+    public void setStudyGoal() {
         editor.putString("studyGoal", studyGoal.getText().toString());
         editor.apply();
         updatePastDays();
     }
+
+    private void createNotification(int notificationID, String title, String content){
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(getContext(), CHANNEL_ID)
+                .setSmallIcon(R.drawable.round_timer_24)
+                .setContentTitle(title)
+                .setContentText(content)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setOnlyAlertOnce(true);
+
+        if (ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(getContext(), "Missing permissions.", Toast.LENGTH_SHORT).show();
+        }
+        else
+            // notificationId is a unique int for each notification that you must define
+            notificationManager.notify(notificationID, builder.build());
+    }
+
+    private void stopNotification(int notificationID){
+        notificationManager.cancel(notificationID);
+    }
+    private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "Channel name";
+            String description = "Channel description";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = (NotificationManager) getContext().getSystemService(getContext().NOTIFICATION_SERVICE);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
 }

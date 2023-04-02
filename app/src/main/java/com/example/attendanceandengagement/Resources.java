@@ -1,9 +1,13 @@
 package com.example.attendanceandengagement;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 
@@ -54,10 +58,69 @@ public class Resources extends Fragment {
         }
     }
 
+    LinearLayout library;
+    LinearLayout international_support;
+    LinearLayout employability;
+    LinearLayout disability;
+    LinearLayout student_support;
+
+
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_resources, container, false);
+        View view = inflater.inflate(R.layout.fragment_resources, container, false);
+        library = (LinearLayout) view.findViewById(R.id.library);
+        international_support = (LinearLayout) view.findViewById(R.id.international_support);
+        employability = (LinearLayout) view.findViewById(R.id.employability);
+        disability = (LinearLayout) view.findViewById(R.id.disability);
+        student_support = (LinearLayout) view.findViewById(R.id.student_support);
+
+        library.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(getContext(), "Library.", Toast.LENGTH_SHORT).show();
+                view.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.image_click));
+                startActivity(new Intent(getContext(), Resources2.class).putExtra("link", "https://www.ntu.ac.uk/m/library"));
+            }
+        });
+
+        international_support.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(getContext(), "international_support.", Toast.LENGTH_SHORT).show();
+                view.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.image_click));
+                startActivity(new Intent(getContext(), Resources2.class).putExtra("link", "https://www.ntu.ac.uk/studenthub/international-student-support"));
+            }
+        });
+
+        employability.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(getContext(), "employability.", Toast.LENGTH_SHORT).show();
+                view.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.image_click));
+                startActivity(new Intent(getContext(), Resources2.class).putExtra("link", "https://www.ntu.ac.uk/studenthub/student-help-advice-and-services/employability"));
+            }
+        });
+
+        disability.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(getContext(), "disability.", Toast.LENGTH_SHORT).show();
+                view.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.image_click));
+                startActivity(new Intent(getContext(), Resources2.class).putExtra("link", "https://www.ntu.ac.uk/life-at-ntu/support/disability-support"));
+            }
+        });
+
+        student_support.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Toast.makeText(getContext(), "student_support.", Toast.LENGTH_SHORT).show();
+                view.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.image_click));
+                startActivity(new Intent(getContext(), Resources2.class).putExtra("link", "https://www.ntu.ac.uk/studenthub/student-help-advice-and-services"));
+            }
+        });
+
+        return view;
     }
 }

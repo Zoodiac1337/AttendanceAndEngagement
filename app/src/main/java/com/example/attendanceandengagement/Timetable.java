@@ -1,12 +1,17 @@
 package com.example.attendanceandengagement;
 
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.fragment.app.Fragment;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Scanner;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -59,6 +64,33 @@ public class Timetable extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
+
+//        System.out.println(jsonGetRequest("https://www.googleapis.com/calendar/v3/calendars/{calendarid}/events?key={Your Public API Key}"));
+
         return inflater.inflate(R.layout.fragment_timetable, container, false);
+    }
+
+    public static String jsonGetRequest(String urlQueryString) {
+        String json = null;
+        try {
+            URL url = new URL(urlQueryString);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoOutput(true);
+            connection.setInstanceFollowRedirects(false);
+            connection.setRequestMethod("GET");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("charset", "utf-8");
+            connection.connect();
+            InputStream inStream = connection.getInputStream();
+            json = streamToString(inStream); // input stream to string
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        return json;
+    }
+
+    private static String streamToString(InputStream inputStream) {
+        String text = new Scanner(inputStream, "UTF-8").useDelimiter("\\Z").next();
+        return text;
     }
 }

@@ -85,7 +85,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:padding="20dp"
-                    android:text="Today reached:"
+                    android:text=""
                     android:textColor="#515151"
                     android:textSize="20sp"
                     android:textStyle="bold" />
