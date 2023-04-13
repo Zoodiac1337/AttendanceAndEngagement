@@ -15,7 +15,6 @@ import androidx.fragment.app.Fragment;
 import com.example.attendanceandengagement.ListAdapters.ListAdapterDeadlines;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -116,7 +115,7 @@ public class Deadlines extends Fragment {
 
     public void populateListWithItems(String[] name, Date[] date, String[] description) {
 
-        lAdapter = new ListAdapterDeadlines(getActivity(), name, date, description);
+        lAdapter = new ListAdapterDeadlines(getContext(), name, date, description);
         deadlinesListView.setAdapter(lAdapter);
     }
 }

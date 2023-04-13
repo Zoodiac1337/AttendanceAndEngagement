@@ -14,5 +14,10 @@
     <color name="studyTime">#fea201</color>
     <color name="breakTime">#2d5500</color>
 
+    <color name="green">#2cba00</color>
+    <color name="light_green">#a3ff00</color>
+    <color name="yellow">#fff400</color>
+    <color name="orange">#ffa700</color>
+    <color name="red">#ff0000</color>
 
 </resources>

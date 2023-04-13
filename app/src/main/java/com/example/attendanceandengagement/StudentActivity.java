@@ -30,6 +30,8 @@ public class StudentActivity extends AppCompatActivity {
         Bundle bundle = getIntent().getExtras();
         Study.setArguments(bundle);
         Deadlines.setArguments(bundle);
+        Timetable.setArguments(bundle);
+        Dashboard.setArguments(bundle);
 
         fragmentManager.beginTransaction().add(R.id.fragmentView, Timetable).add(R.id.fragmentView, Study).add(R.id.fragmentView, Deadlines).add(R.id.fragmentView, Resources).add(R.id.fragmentView, Dashboard).commit();
 
@@ -41,27 +43,27 @@ public class StudentActivity extends AppCompatActivity {
                             case R.id.timetable:
                                 topBar.setTitle("Timetable");
                                 topBar.setNavigationIcon(R.drawable.round_calendar_today_24);
-                                fragmentManager.beginTransaction().hide(Study).hide(Deadlines).hide(Resources).hide(Dashboard).show(Timetable).commit();
+                                fragmentManager.beginTransaction().hide(Study).hide(Deadlines).hide(Resources).detach(Dashboard).show(Timetable).commit();
                                 break;
                             case R.id.study:
                                 topBar.setTitle("Study");
                                 topBar.setNavigationIcon(R.drawable.round_school_24);
-                                fragmentManager.beginTransaction().hide(Timetable).hide(Deadlines).hide(Resources).hide(Dashboard).show(Study).commit();
+                                fragmentManager.beginTransaction().hide(Timetable).hide(Deadlines).hide(Resources).detach(Dashboard).show(Study).commit();
                                 break;
                             case R.id.deadlines:
                                 topBar.setTitle("Deadlines");
                                 topBar.setNavigationIcon(R.drawable.round_warning_24);
-                                fragmentManager.beginTransaction().hide(Timetable).hide(Study).hide(Resources).hide(Dashboard).show(Deadlines).commit();
+                                fragmentManager.beginTransaction().hide(Timetable).hide(Study).hide(Resources).detach(Dashboard).show(Deadlines).commit();
                                 break;
                             case R.id.resources:
                                 topBar.setTitle("Resources");
                                 topBar.setNavigationIcon(R.drawable.round_library_books_24);
-                                fragmentManager.beginTransaction().hide(Timetable).hide(Deadlines).hide(Study).hide(Dashboard).show(Resources).commit();
+                                fragmentManager.beginTransaction().hide(Timetable).hide(Deadlines).hide(Study).detach(Dashboard).show(Resources).commit();
                                 break;
                             case R.id.dashboard:
                                 topBar.setTitle("Dashboard");
                                 topBar.setNavigationIcon(R.drawable.round_space_dashboard_24);
-                                fragmentManager.beginTransaction().hide(Timetable).hide(Deadlines).hide(Resources).hide(Study).show(Dashboard).commit();
+                                fragmentManager.beginTransaction().hide(Timetable).hide(Deadlines).hide(Resources).hide(Study).attach(Dashboard).commit();
                                 break;
                         }
 

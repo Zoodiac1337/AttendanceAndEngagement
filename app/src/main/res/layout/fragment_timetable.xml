@@ -2,13 +2,19 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     tools:context=".Timetable">
 
     <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <!-- Here you put the rest of your current view-->
+
+    <ListView
+        android:id="@+id/calendarsOrTimetableList"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="timetable" />
+        android:divider="@null">
+
+    </ListView>
+
 
 </FrameLayout>

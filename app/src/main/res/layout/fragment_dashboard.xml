@@ -5,10 +5,76 @@
     android:layout_height="match_parent"
     tools:context=".Timetable">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="dashboard" />
+        android:fillViewport="true">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="20dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/round_border"
+            android:elevation="10dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:isScrollContainer="false"
+            android:keepScreenOn="false"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Current attendance score"
+                android:padding="10dp"
+                android:textColor="#515151"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <com.github.mikephil.charting.charts.HorizontalBarChart
+                android:id="@+id/attendanceChart"
+                android:layout_width="match_parent"
+                android:layout_height="300dp" />
+        </LinearLayout>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="20dp" />
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/round_border"
+            android:elevation="10dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:isScrollContainer="false"
+            android:keepScreenOn="false"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Current engagement scores"
+                android:padding="10dp"
+                android:textColor="#515151"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <com.github.mikephil.charting.charts.BarChart
+                android:id="@+id/engagementChart"
+                android:layout_width="match_parent"
+                android:layout_height="300dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+    </ScrollView>
 
 </FrameLayout>

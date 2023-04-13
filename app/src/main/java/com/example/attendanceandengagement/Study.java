@@ -42,8 +42,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -60,6 +60,28 @@ public class Study extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
+    private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private final CountDownTimer[] timer = {null};
+    private Button startButton;
+    private Button stopButton;
+    private Button studyGoalButton;
+    private TextView timerText;
+    private TableRow timerRow1;
+    private TableRow timerRow2;
+    private TextView timerSeconds;
+    private TextView timerMinutes;
+    private TextView goalReached;
+    private EditText pomodoroWork;
+    private EditText pomodoroBreak;
+    private EditText studyGoal;
+    private MediaPlayer notification;
+    private BarChart barChart;
+    private Bundle bundle;
+    private SharedPreferences preferences;
+    private SharedPreferences.Editor editor;
+    private DocumentReference docRef;
+    private NotificationManagerCompat notificationManager;
+    private static final String CHANNEL_ID = "notificationChannel";
 
     public Study() {
         // Required empty public constructor
@@ -91,29 +113,6 @@ public class Study extends Fragment {
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
     }
-
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
-    final CountDownTimer[] timer = {null};
-    Button startButton;
-    Button stopButton;
-    Button studyGoalButton;
-    TextView timerText;
-    TableRow timerRow1;
-    TableRow timerRow2;
-    TextView timerSeconds;
-    TextView timerMinutes;
-    TextView goalReached;
-    EditText pomodoroWork;
-    EditText pomodoroBreak;
-    EditText studyGoal;
-    MediaPlayer notification;
-    BarChart barChart;
-    Bundle bundle;
-    SharedPreferences preferences;
-    SharedPreferences.Editor editor;
-    DocumentReference docRef;
-    NotificationManagerCompat notificationManager;
-    private static final String CHANNEL_ID = "notificationChannel";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -288,11 +287,11 @@ public class Study extends Fragment {
         docRef.get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                Map<String, Float> barChartEntries = new TreeMap<String, Float>();
+                Map<String, Float> barChartEntries = new LinkedHashMap<>();
                 if (task.isSuccessful()) {
                     DocumentSnapshot document = task.getResult();
                     float StudyGoal = Integer.parseInt(preferences.getString("studyGoal", "2")) * 60;
-                    for (int i = 0; i <= 6; i++) {
+                    for (int i = 6; i >= 0; i--) {
                         LocalDate date = LocalDate.now().minus(Period.ofDays(i));
                         if (document.getLong("minutesStudied." + date) != null)
                             barChartEntries.put(date.getDayOfMonth() + "th", document.getLong("minutesStudied." + date) * 100f / StudyGoal);
@@ -324,7 +323,7 @@ public class Study extends Fragment {
 
         barDataSet.setColor(Color.parseColor("#E4045B"));
         barDataSet.setValueTextColor(Color.BLACK);
-        barDataSet.setValueTextSize(0f);
+        barDataSet.setValueTextSize(15f);
         XAxis xAxis = barChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.setDrawGridLines(false);
