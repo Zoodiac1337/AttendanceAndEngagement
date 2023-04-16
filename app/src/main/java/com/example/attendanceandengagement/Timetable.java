@@ -118,6 +118,7 @@ public class Timetable extends Fragment {
         return view;
     }
 
+
     private void getAllCalendars(){
         ContentResolver cr = getContext().getContentResolver();
 

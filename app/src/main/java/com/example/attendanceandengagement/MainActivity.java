@@ -1,14 +1,17 @@
 package com.example.attendanceandengagement;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -29,11 +32,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onStart() {
         super.onStart();
+
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.READ_CALENDAR}, 42);
+        }
+
         if(mAuth.getCurrentUser() != null){
             String email = mAuth.getCurrentUser().getEmail();
             if (email.endsWith("@my.ntu.ac.uk"))
                 startActivity(new Intent(MainActivity.this, StudentActivity.class).putExtra("email", email));
-            else if (email.endsWith("ntu.ac.uk"))
+            //To be added when connected to a ntu network for admin (tutor) accounts later.
+            else if (email.endsWith("@ntu.ac.uk"))
                 startActivity(new Intent(MainActivity.this, StudentActivity.class).putExtra("email", email));
             finish();
         }
@@ -46,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
                 if (task.isSuccessful()) {
                     if (email.endsWith("@my.ntu.ac.uk"))
                         startActivity(new Intent(MainActivity.this, StudentActivity.class).putExtra("email", email));
-                    else if (email.endsWith("ntu.ac.uk"))
+                    else if (email.endsWith("@ntu.ac.uk"))
                         startActivity(new Intent(MainActivity.this, StudentActivity.class).putExtra("email", email));
                     finish();
                     Toast.makeText(MainActivity.this, email+" logged in", Toast.LENGTH_SHORT).show();

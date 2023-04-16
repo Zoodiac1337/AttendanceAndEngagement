@@ -2,12 +2,15 @@ package com.example.attendanceandengagement;
 
 import static android.content.ContentValues.TAG;
 
+import static java.lang.Math.round;
+
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -48,6 +51,8 @@ public class Dashboard extends Fragment {
     private View view;
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private Bundle bundle;
+    private TextView attendanceText;
+    private TextView engagementText;
 
     private BarChart attendanceChart;
     private BarChart engagementChart;
@@ -89,6 +94,8 @@ public class Dashboard extends Fragment {
         view  = inflater.inflate(R.layout.fragment_dashboard, container, false);
         bundle = getArguments();
 
+        attendanceText = (TextView) view.findViewById(R.id.attendanceScore);
+        engagementText = (TextView) view.findViewById(R.id.engagementScore);
         attendanceChart = (BarChart) view.findViewById(R.id.attendanceChart);
         engagementChart = (BarChart) view.findViewById(R.id.engagementChart);
         Map<String, Float> barChartEntries = new TreeMap<String, Float>();
@@ -106,13 +113,23 @@ public class Dashboard extends Fragment {
             public void onComplete(@NonNull Task<QuerySnapshot> task) {
                 Map<String, Long> attendanceEntries = new TreeMap<String, Long>();
                 Map<String, float[]> engagementEntries = new TreeMap<String, float[]>();
+                Float overallAttendance = 0f;
+                Float overallEngagement = 0f;
+                String[] engagementScores = new String[]{"Very Poor", "Poor", "Average", "Good", "Very Good"};
 
                 if (task.isSuccessful()) {
                     int i = 0;
                     for (QueryDocumentSnapshot document : task.getResult()) {
                         attendanceEntries.put(document.getString("Title"), ((document.getLong("Present")*100l)/(document.getLong("Absent")+document.getLong("Present"))));
+                        overallAttendance = overallAttendance + ((document.getLong("Present")*100l)/(document.getLong("Absent")+document.getLong("Present")));
                         engagementEntries.put(document.getString("Title"), new float[] {document.getLong("Very Good"), document.getLong("Good"), document.getLong("Average"), document.getLong("Poor"), document.getLong("Very Poor")});
+                        overallEngagement = overallEngagement + ((float)document.getLong("Engagement")/(float)document.getLong("Present"));
+                        i++;
                     }
+
+                    attendanceText.setText("Combined attendance: "+overallAttendance/i+"%");
+
+                    engagementText.setText("Combined engagement: "+engagementScores[(int) round(overallEngagement/i)-1]);
 
                     setBarData(attendanceEntries);
                     setBarData2(engagementEntries);

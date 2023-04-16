@@ -357,7 +357,7 @@ public class Study extends Fragment {
                 .setOnlyAlertOnce(true);
 
         if (ActivityCompat.checkSelfPermission(getContext(), android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(getContext(), "Missing permissions.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Missing permissions for notifications.", Toast.LENGTH_SHORT).show();
         }
         else
             // notificationId is a unique int for each notification that you must define
